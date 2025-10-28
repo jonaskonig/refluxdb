@@ -71,11 +71,12 @@ jobs:
         run: |  
           echo "PYO3_CONFIG_FILE=${PWD}/python-artifacts/${{ matrix.target }}/pyo3_config_file.txt" >> $GITHUB_ENV  
           echo "PYO3_CROSS_PYTHON_VERSION=3.13" >> $GITHUB_ENV  
+          echo "LD_LIBRARY_PATH=${PWD}/python-artifacts/${{ matrix.target }}/python/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV  
   
       - name: Build binary  
         run: |  
           cargo build --package="$PACKAGE" --profile="$PROFILE" --target="${{ matrix.target }}" --no-default-features --features="$FEATURES"  
-          objcopy --compress-debug-sections "target/${{ matrix.target }}/$PROFILE/$PACKAGE"  
+          objcopy --compress-debug-sections "target/${{ matrix.target }}/$PROFILE/$PACKAGE"
   
       - name: Adjust RPATH for Linux  
         run: |  
