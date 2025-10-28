@@ -92,7 +92,7 @@ RUN chown -R root:root /usr/lib/influxdb3
 RUN mkdir /plugins && \  
     chown influxdb3:influxdb3 /plugins  
   
-USER influxdb3  
+ 
   
 RUN mkdir ~/.influxdb3  
   
@@ -103,7 +103,9 @@ ENV INFLUXDB3_PLUGIN_DIR=/plugins
 COPY --from=build "/root/$PACKAGE" "/usr/bin/$PACKAGE"  
   
 RUN chmod +x /usr/bin/influxdb3  
-  
+
+USER influxdb3 
+
 EXPOSE 8181  
   
 ENV LOG_FILTER=info  
