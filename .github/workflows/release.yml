@@ -62,18 +62,11 @@ jobs:
   
       - name: Fetch Python Build Standalone  
         run: |  
-          # Set PBS variables (matching CircleCI configuration)  
-          export PBS_DATE="20250612"  
-          export PBS_VERSION="3.13.5"  
-            
-          # Fetch python for all targets  
           .circleci/scripts/fetch-python-standalone.bash \  
-            "python-artifacts" \  
-            "$PBS_DATE" \  
-            "$PBS_VERSION"  
-            
-          # Extract for this specific target  
-          tar -C python-artifacts -zxf python-artifacts/all.tar.gz "./${{ matrix.target }}"  
+          "python-artifacts" \  
+          "20250612" \  
+          "3.13.5"  
+          tar -C python-artifacts -zxf python-artifacts/all.tar.gz "./${{ matrix.target }}"
   
       - name: Setup PYO3 environment  
         run: |  
