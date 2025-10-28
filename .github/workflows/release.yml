@@ -18,27 +18,29 @@ env:
   
 jobs:  
   build-binary:  
-    name: Build Binary (${{ matrix.arch }})  
-    runs-on: ubuntu-latest  
+    name: Build Binary (${{ matrix.target }})  
+    runs-on: ${{ matrix.runner }}  
     strategy:  
       matrix:  
         include:  
           - target: x86_64-unknown-linux-gnu  
+            runner: ubuntu-latest  
             arch: amd64  
           - target: aarch64-unknown-linux-gnu  
+            runner: ubuntu-24.04-arm64  
             arch: arm64  
     outputs:  
-      version: ${{ env.VERSION }}  
+      version: ${{ steps.extract-version.outputs.version }}  
     steps:  
       - name: Checkout code  
         uses: actions/checkout@v4  
         with:  
-          repository: refluxdb/refluxdb  
-          ref: main  
+          repository: metrico/influxdb3-unlocked  
+          ref: unlocked  
   
       - name: Install Rust  
         uses: dtolnay/rust-toolchain@stable  
-        
+  
       - name: Install target  
         run: rustup target add ${{ matrix.target }}  
   
@@ -49,45 +51,64 @@ jobs:
             ~/.cargo/registry  
             ~/.cargo/git  
             target  
-          key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}  
+          key: ${{ runner.os }}-${{ matrix.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}  
           restore-keys: |  
-            ${{ runner.os }}-cargo-${{ matrix.target }}-  
-            ${{ runner.os }}-cargo-  
+            ${{ runner.os }}-${{ matrix.arch }}-cargo-  
   
       - name: Install dependencies  
         run: |  
           sudo apt update  
           sudo apt install -y binutils build-essential curl pkg-config libssl-dev clang lld git patchelf protobuf-compiler zstd libz-dev python3-dev python3-pip  
-          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then  
-            sudo apt install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu  
-          fi  
+  
+      - name: Fetch Python Build Standalone  
+        run: |  
+          # Set PBS variables (matching CircleCI configuration)  
+          export PBS_DATE="20250612"  
+          export PBS_VERSION="3.13.5"  
+            
+          # Fetch python for all targets  
+          .circleci/scripts/fetch-python-standalone.bash \  
+            "python-artifacts" \  
+            "$PBS_DATE" \  
+            "$PBS_VERSION"  
+            
+          # Extract for this specific target  
+          tar -C python-artifacts -zxf python-artifacts/all.tar.gz "./${{ matrix.target }}"  
+  
+      - name: Setup PYO3 environment  
+        run: |  
+          echo "PYO3_CONFIG_FILE=${PWD}/python-artifacts/${{ matrix.target }}/pyo3_config_file.txt" >> $GITHUB_ENV  
+          echo "PYO3_CROSS_PYTHON_VERSION=3.13" >> $GITHUB_ENV  
   
       - name: Build binary  
         run: |  
           cargo build --package="$PACKAGE" --profile="$PROFILE" --target="${{ matrix.target }}" --no-default-features --features="$FEATURES"  
           objcopy --compress-debug-sections "target/${{ matrix.target }}/$PROFILE/$PACKAGE"  
-        env:  
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc  
+  
+      - name: Adjust RPATH for Linux  
+        run: |  
+          patchelf --set-rpath '$ORIGIN/python/lib:$ORIGIN/../lib/influxdb3/python/lib' \  
+            "target/${{ matrix.target }}/$PROFILE/$PACKAGE"  
   
       - name: Extract version  
+        id: extract-version  
         run: |  
-          VERSION=$(file "target/${{ matrix.target }}/$PROFILE/$PACKAGE" | grep -q "ARM aarch64" && echo "cross-compiled" || ./target/${{ matrix.target }}/$PROFILE/$PACKAGE --version | cut -d' ' -f2 | cut -d',' -f1)  
-          if [ "$VERSION" = "cross-compiled" ]; then  
-            VERSION=$(strings "target/${{ matrix.target }}/$PROFILE/$PACKAGE" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | head -1)  
-          fi  
-          echo "VERSION=$VERSION" >> $GITHUB_ENV  
+          VERSION=$(./target/${{ matrix.target }}/$PROFILE/$PACKAGE --version | cut -d' ' -f2 | cut -d',' -f1)  
+          echo "version=$VERSION" >> $GITHUB_OUTPUT  
           echo "Extracted version: $VERSION"  
   
       - name: Create release archive  
         run: |  
-          mkdir -p release  
-          cp "./target/${{ matrix.target }}/$PROFILE/$PACKAGE" release/influxdb3-${{ matrix.arch }}  
+          mkdir -p release/${{ matrix.target }}  
+          cp "./target/${{ matrix.target }}/$PROFILE/$PACKAGE" release/${{ matrix.target }}/influxdb3  
+          # Include the Python runtime  
+          cp -r "python-artifacts/${{ matrix.target }}/python" release/${{ matrix.target }}/  
   
       - name: Upload binary artifact  
         uses: actions/upload-artifact@v4  
         with:  
-          name: influxdb3-${{ matrix.arch }}  
-          path: ./release/influxdb3-${{ matrix.arch }}  
+          name: influxdb3-${{ matrix.target }}  
+          path: ./release/${{ matrix.target }}/  
           retention-days: 1  
   
       - name: Release  
@@ -95,6 +116,4 @@ jobs:
         if: github.ref_type == 'tag'  
         with:  
           files: |  
-            ./release/influxdb3-${{ matrix.arch }}  
-              
-  
+            ./release/${{ matrix.target }}/influxdb3
