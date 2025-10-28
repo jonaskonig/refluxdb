@@ -111,4 +111,4 @@ EXPOSE 8181
   
 ENV LOG_FILTER=info  
   
-CMD ["/usr/bin/influxdb3", "serve", "--writer-id=iox", "--object-store", "file", "--data-dir", "/data"]
+CMD ["/usr/bin/influxdb3", "serve"]
