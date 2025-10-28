@@ -62,10 +62,9 @@ jobs:
   
       - name: Fetch Python Build Standalone  
         run: |  
-          .circleci/scripts/fetch-python-standalone.bash \  
-          "python-artifacts" \  
-          "20250612" \  
-          "3.13.5"  
+          PBS_DATE="20250612"  
+          PBS_VERSION="3.13.5"  
+          .circleci/scripts/fetch-python-standalone.bash "python-artifacts" "${PBS_DATE}" "${PBS_VERSION}"  
           tar -C python-artifacts -zxf python-artifacts/all.tar.gz "./${{ matrix.target }}"
   
       - name: Setup PYO3 environment  
