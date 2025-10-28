@@ -57,7 +57,20 @@ jobs:
           else  
             echo "profile=quick-release" >> $GITHUB_OUTPUT  
           fi  
-  
+      - name: Set build parameters  
+        id: build-params  
+        run: |  
+          if [ "${{ matrix.arch }}" = "arm64" ]; then  
+            echo "cargo_jobs=8" >> $GITHUB_OUTPUT  
+            echo "profile=quick-release" >> $GITHUB_OUTPUT  
+          else  
+            echo "cargo_jobs=12" >> $GITHUB_OUTPUT  
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then  
+              echo "profile=release" >> $GITHUB_OUTPUT  
+            else  
+              echo "profile=quick-release" >> $GITHUB_OUTPUT  
+            fi  
+          fi 
       - name: Build Docker image  
         uses: docker/build-push-action@v6  
         with:  
@@ -69,14 +82,14 @@ jobs:
           build-args: |  
             CARGO_INCREMENTAL=no  
             CARGO_NET_GIT_FETCH_WITH_CLI=true  
-            CARGO_BUILD_JOBS=12  
-            PROFILE=${{ steps.profile.outputs.profile }}  
+            CARGO_BUILD_JOBS=${{ steps.build-params.outputs.cargo_jobs }}  
+            PROFILE=${{ steps.build-params.outputs.profile }}  
             FEATURES=aws,gcp,azure,jemalloc_replacing_malloc,tokio_console  
             PACKAGE=influxdb3  
             PBS_DATE=20250612  
             PBS_VERSION=3.13.5  
           cache-from: type=gha,scope=${{ matrix.arch }}  
-          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}  
+          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
   
       - name: Save Docker image  
         run: |  
