@@ -12,7 +12,8 @@ RUN mkdir /influxdb3
 WORKDIR /influxdb3  
   
 ARG CARGO_INCREMENTAL=no  
-ARG CARGO_NET_GIT_FETCH_WITH_CLI=true  
+ARG CARGO_NET_GIT_FETCH_WITH_CLI=true
+ARG CARGO_BUILD_JOBS=12  
 ARG PROFILE=release  
 ARG FEATURES=aws,gcp,azure,jemalloc_replacing_malloc,tokio_console  
 ARG PACKAGE=influxdb3  
