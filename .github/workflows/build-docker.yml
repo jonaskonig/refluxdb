@@ -149,37 +149,41 @@ jobs:
       - name: Tag and push images  
         run: |  
           IMAGE_BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"  
+          COMMIT_SHA="${{ github.sha }}"  
             
-          # Tag for each architecture  
-          docker tag influxdb3-core:latest-amd64 "${IMAGE_BASE}:${{ github.sha }}-amd64"  
-          docker tag influxdb3-core:latest-arm64 "${IMAGE_BASE}:${{ github.sha }}-arm64"  
+          # Verify images are loaded  
+          docker images  
+            
+          # Tag for each architecture with explicit names  
+          docker tag "influxdb3-core:latest-amd64" "${IMAGE_BASE}:${COMMIT_SHA}-amd64"  
+          docker tag "influxdb3-core:latest-arm64" "${IMAGE_BASE}:${COMMIT_SHA}-arm64"  
             
           # Push architecture-specific images  
-          docker push "${IMAGE_BASE}:${{ github.sha }}-amd64"  
-          docker push "${IMAGE_BASE}:${{ github.sha }}-arm64"  
+          docker push "${IMAGE_BASE}:${COMMIT_SHA}-amd64"  
+          docker push "${IMAGE_BASE}:${COMMIT_SHA}-arm64"  
             
           # Create and push multi-arch manifest  
-          docker manifest create "${IMAGE_BASE}:${{ github.sha }}" \  
-            --amend "${IMAGE_BASE}:${{ github.sha }}-amd64" \  
-            --amend "${IMAGE_BASE}:${{ github.sha }}-arm64"  
+          docker manifest create "${IMAGE_BASE}:${COMMIT_SHA}" \  
+            --amend "${IMAGE_BASE}:${COMMIT_SHA}-amd64" \  
+            --amend "${IMAGE_BASE}:${COMMIT_SHA}-arm64"  
             
-          docker manifest annotate "${IMAGE_BASE}:${{ github.sha }}" \  
-            "${IMAGE_BASE}:${{ github.sha }}-amd64" --arch amd64 --os linux  
-          docker manifest annotate "${IMAGE_BASE}:${{ github.sha }}" \  
-            "${IMAGE_BASE}:${{ github.sha }}-arm64" --arch arm64 --os linux  
+          docker manifest annotate "${IMAGE_BASE}:${COMMIT_SHA}" \  
+            "${IMAGE_BASE}:${COMMIT_SHA}-amd64" --arch amd64 --os linux  
+          docker manifest annotate "${IMAGE_BASE}:${COMMIT_SHA}" \  
+            "${IMAGE_BASE}:${COMMIT_SHA}-arm64" --arch arm64 --os linux  
             
-          docker manifest push "${IMAGE_BASE}:${{ github.sha }}"  
+          docker manifest push "${IMAGE_BASE}:${COMMIT_SHA}"  
             
           # If main branch, also tag as latest  
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then  
             docker manifest create "${IMAGE_BASE}:latest" \  
-              --amend "${IMAGE_BASE}:${{ github.sha }}-amd64" \  
-              --amend "${IMAGE_BASE}:${{ github.sha }}-arm64"  
+              --amend "${IMAGE_BASE}:${COMMIT_SHA}-amd64" \  
+              --amend "${IMAGE_BASE}:${COMMIT_SHA}-arm64"  
               
             docker manifest annotate "${IMAGE_BASE}:latest" \  
-              "${IMAGE_BASE}:${{ github.sha }}-amd64" --arch amd64 --os linux  
+              "${IMAGE_BASE}:${COMMIT_SHA}-amd64" --arch amd64 --os linux  
             docker manifest annotate "${IMAGE_BASE}:latest" \  
-              "${IMAGE_BASE}:${{ github.sha }}-arm64" --arch arm64 --os linux  
+              "${IMAGE_BASE}:${COMMIT_SHA}-arm64" --arch arm64 --os linux  
               
             docker manifest push "${IMAGE_BASE}:latest"  
           fi
