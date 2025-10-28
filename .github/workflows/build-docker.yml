@@ -160,16 +160,17 @@ jobs:
           docker push "${IMAGE_BASE}:latest-amd64"  
           docker push "${IMAGE_BASE}:latest-arm64"  
             
-          # Create multi-arch manifest for :latest  
+      - name: Create and push manifest  
+        run: |  
+          IMAGE_BASE="ghcr.io/${{ github.repository_owner }}/influxdb3-core"  
+            
           docker manifest create "${IMAGE_BASE}:latest" \  
             --amend "${IMAGE_BASE}:latest-amd64" \  
             --amend "${IMAGE_BASE}:latest-arm64"  
             
-          # Annotate with architecture info  
           docker manifest annotate "${IMAGE_BASE}:latest" \  
             "${IMAGE_BASE}:latest-amd64" --arch amd64 --os linux  
           docker manifest annotate "${IMAGE_BASE}:latest" \  
             "${IMAGE_BASE}:latest-arm64" --arch arm64 --os linux  
             
-          # Push the manifest  
           docker manifest push "${IMAGE_BASE}:latest"
