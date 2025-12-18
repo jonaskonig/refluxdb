@@ -936,30 +936,74 @@ pub async fn command(config: Config) -> Result<()> {
     generation_durations.insert(1, config.gen1_duration.as_duration());
     
     if let Some(gen2_duration) = config.gen2_duration {
-        generation_durations.insert(2, gen2_duration.as_duration());
-        match catalog.set_generation_duration(2, gen2_duration.as_duration()).await {
+        let duration = gen2_duration.as_duration();
+        generation_durations.insert(2, duration);
+        match catalog.set_generation_duration(2, duration).await {
             Ok(_) | Err(CatalogError::AlreadyExists) => {},
+            Err(CatalogError::CannotChangeGenerationDuration { .. }) => {
+                let existing = catalog
+                    .get_generation_duration(2)
+                    .expect("catalog should contain existing gen2 duration");
+                warn!(
+                    existing_secs = existing.as_secs(),
+                    provided_secs = duration.as_secs(),
+                    "cannot change the existing gen2 duration after it has been set"
+                );
+            }
             Err(e) => return Err(e.into()),
         }
     }
     if let Some(gen3_duration) = config.gen3_duration {
-        generation_durations.insert(3, gen3_duration.as_duration());
-        match catalog.set_generation_duration(3, gen3_duration.as_duration()).await {
+        let duration = gen3_duration.as_duration();
+        generation_durations.insert(3, duration);
+        match catalog.set_generation_duration(3, duration).await {
             Ok(_) | Err(CatalogError::AlreadyExists) => {},
+            Err(CatalogError::CannotChangeGenerationDuration { .. }) => {
+                let existing = catalog
+                    .get_generation_duration(3)
+                    .expect("catalog should contain existing gen3 duration");
+                warn!(
+                    existing_secs = existing.as_secs(),
+                    provided_secs = duration.as_secs(),
+                    "cannot change the existing gen3 duration after it has been set"
+                );
+            }
             Err(e) => return Err(e.into()),
         }
     }
     if let Some(gen4_duration) = config.gen4_duration {
-        generation_durations.insert(4, gen4_duration.as_duration());
-        match catalog.set_generation_duration(4, gen4_duration.as_duration()).await {
+        let duration = gen4_duration.as_duration();
+        generation_durations.insert(4, duration);
+        match catalog.set_generation_duration(4, duration).await {
             Ok(_) | Err(CatalogError::AlreadyExists) => {},
+            Err(CatalogError::CannotChangeGenerationDuration { .. }) => {
+                let existing = catalog
+                    .get_generation_duration(4)
+                    .expect("catalog should contain existing gen4 duration");
+                warn!(
+                    existing_secs = existing.as_secs(),
+                    provided_secs = duration.as_secs(),
+                    "cannot change the existing gen4 duration after it has been set"
+                );
+            }
             Err(e) => return Err(e.into()),
         }
     }
     if let Some(gen5_duration) = config.gen5_duration {
-        generation_durations.insert(5, gen5_duration.as_duration());
-        match catalog.set_generation_duration(5, gen5_duration.as_duration()).await {
+        let duration = gen5_duration.as_duration();
+        generation_durations.insert(5, duration);
+        match catalog.set_generation_duration(5, duration).await {
             Ok(_) | Err(CatalogError::AlreadyExists) => {},
+            Err(CatalogError::CannotChangeGenerationDuration { .. }) => {
+                let existing = catalog
+                    .get_generation_duration(5)
+                    .expect("catalog should contain existing gen5 duration");
+                warn!(
+                    existing_secs = existing.as_secs(),
+                    provided_secs = duration.as_secs(),
+                    "cannot change the existing gen5 duration after it has been set"
+                );
+            }
             Err(e) => return Err(e.into()),
         }
     }
