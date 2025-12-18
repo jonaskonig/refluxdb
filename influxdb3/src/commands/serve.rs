@@ -937,9 +937,10 @@ pub async fn command(config: Config) -> Result<()> {
     
     if let Some(gen2_duration) = config.gen2_duration {
         let duration = gen2_duration.as_duration();
-        generation_durations.insert(2, duration);
         match catalog.set_generation_duration(2, duration).await {
-            Ok(_) | Err(CatalogError::AlreadyExists) => {},
+            Ok(_) | Err(CatalogError::AlreadyExists) => {
+                generation_durations.insert(2, duration);
+            }
             Err(CatalogError::CannotChangeGenerationDuration { .. }) => {
                 let existing = catalog
                     .get_generation_duration(2)
@@ -949,15 +950,17 @@ pub async fn command(config: Config) -> Result<()> {
                     provided_secs = duration.as_secs(),
                     "cannot change the existing gen2 duration after it has been set"
                 );
+                generation_durations.insert(2, existing);
             }
             Err(e) => return Err(e.into()),
         }
     }
     if let Some(gen3_duration) = config.gen3_duration {
         let duration = gen3_duration.as_duration();
-        generation_durations.insert(3, duration);
         match catalog.set_generation_duration(3, duration).await {
-            Ok(_) | Err(CatalogError::AlreadyExists) => {},
+            Ok(_) | Err(CatalogError::AlreadyExists) => {
+                generation_durations.insert(3, duration);
+            }
             Err(CatalogError::CannotChangeGenerationDuration { .. }) => {
                 let existing = catalog
                     .get_generation_duration(3)
@@ -967,15 +970,17 @@ pub async fn command(config: Config) -> Result<()> {
                     provided_secs = duration.as_secs(),
                     "cannot change the existing gen3 duration after it has been set"
                 );
+                generation_durations.insert(3, existing);
             }
             Err(e) => return Err(e.into()),
         }
     }
     if let Some(gen4_duration) = config.gen4_duration {
         let duration = gen4_duration.as_duration();
-        generation_durations.insert(4, duration);
         match catalog.set_generation_duration(4, duration).await {
-            Ok(_) | Err(CatalogError::AlreadyExists) => {},
+            Ok(_) | Err(CatalogError::AlreadyExists) => {
+                generation_durations.insert(4, duration);
+            }
             Err(CatalogError::CannotChangeGenerationDuration { .. }) => {
                 let existing = catalog
                     .get_generation_duration(4)
@@ -985,15 +990,17 @@ pub async fn command(config: Config) -> Result<()> {
                     provided_secs = duration.as_secs(),
                     "cannot change the existing gen4 duration after it has been set"
                 );
+                generation_durations.insert(4, existing);
             }
             Err(e) => return Err(e.into()),
         }
     }
     if let Some(gen5_duration) = config.gen5_duration {
         let duration = gen5_duration.as_duration();
-        generation_durations.insert(5, duration);
         match catalog.set_generation_duration(5, duration).await {
-            Ok(_) | Err(CatalogError::AlreadyExists) => {},
+            Ok(_) | Err(CatalogError::AlreadyExists) => {
+                generation_durations.insert(5, duration);
+            }
             Err(CatalogError::CannotChangeGenerationDuration { .. }) => {
                 let existing = catalog
                     .get_generation_duration(5)
@@ -1003,6 +1010,7 @@ pub async fn command(config: Config) -> Result<()> {
                     provided_secs = duration.as_secs(),
                     "cannot change the existing gen5 duration after it has been set"
                 );
+                generation_durations.insert(5, existing);
             }
             Err(e) => return Err(e.into()),
         }
