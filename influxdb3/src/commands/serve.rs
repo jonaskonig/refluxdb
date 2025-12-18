@@ -937,19 +937,31 @@ pub async fn command(config: Config) -> Result<()> {
     
     if let Some(gen2_duration) = config.gen2_duration {
         generation_durations.insert(2, gen2_duration.as_duration());
-        catalog.set_generation_duration(2, gen2_duration.as_duration()).await?;
+        match catalog.set_generation_duration(2, gen2_duration.as_duration()).await {
+            Ok(_) | Err(CatalogError::AlreadyExists) => {},
+            Err(e) => return Err(e.into()),
+        }
     }
     if let Some(gen3_duration) = config.gen3_duration {
         generation_durations.insert(3, gen3_duration.as_duration());
-        catalog.set_generation_duration(3, gen3_duration.as_duration()).await?;
+        match catalog.set_generation_duration(3, gen3_duration.as_duration()).await {
+            Ok(_) | Err(CatalogError::AlreadyExists) => {},
+            Err(e) => return Err(e.into()),
+        }
     }
     if let Some(gen4_duration) = config.gen4_duration {
         generation_durations.insert(4, gen4_duration.as_duration());
-        catalog.set_generation_duration(4, gen4_duration.as_duration()).await?;
+        match catalog.set_generation_duration(4, gen4_duration.as_duration()).await {
+            Ok(_) | Err(CatalogError::AlreadyExists) => {},
+            Err(e) => return Err(e.into()),
+        }
     }
     if let Some(gen5_duration) = config.gen5_duration {
         generation_durations.insert(5, gen5_duration.as_duration());
-        catalog.set_generation_duration(5, gen5_duration.as_duration()).await?;
+        match catalog.set_generation_duration(5, gen5_duration.as_duration()).await {
+            Ok(_) | Err(CatalogError::AlreadyExists) => {},
+            Err(e) => return Err(e.into()),
+        }
     }
 
     // Initialize and start compaction service
