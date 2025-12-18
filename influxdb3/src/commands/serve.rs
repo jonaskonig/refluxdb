@@ -649,6 +649,35 @@ fn ensure_directory_exists(p: &Path) {
     }
 }
 
+/// Helper function to set a generation duration in the catalog and update the HashMap.
+/// Handles AlreadyExists and CannotChangeGenerationDuration errors gracefully.
+async fn set_generation_duration_with_error_handling(
+    catalog: &Arc<Catalog>,
+    generation_durations: &mut std::collections::HashMap<u8, Duration>,
+    level: u8,
+    duration: Duration,
+) -> Result<()> {
+    match catalog.set_generation_duration(level, duration).await {
+        Ok(_) | Err(CatalogError::AlreadyExists) => {
+            generation_durations.insert(level, duration);
+        }
+        Err(CatalogError::CannotChangeGenerationDuration { .. }) => {
+            let existing = catalog
+                .get_generation_duration(level)
+                .unwrap_or_else(|| panic!("catalog should contain existing gen{} duration", level));
+            warn!(
+                level,
+                existing_secs = existing.as_secs(),
+                provided_secs = duration.as_secs(),
+                "cannot change the existing generation duration after it has been set"
+            );
+            generation_durations.insert(level, existing);
+        }
+        Err(e) => return Err(e.into()),
+    }
+    Ok(())
+}
+
 pub async fn command(config: Config) -> Result<()> {
     // Check that both a cert file and key file are present if TLS is being set up
     match (&config.cert_file, &config.key_file) {
@@ -936,84 +965,36 @@ pub async fn command(config: Config) -> Result<()> {
     generation_durations.insert(1, config.gen1_duration.as_duration());
     
     if let Some(gen2_duration) = config.gen2_duration {
-        let duration = gen2_duration.as_duration();
-        match catalog.set_generation_duration(2, duration).await {
-            Ok(_) | Err(CatalogError::AlreadyExists) => {
-                generation_durations.insert(2, duration);
-            }
-            Err(CatalogError::CannotChangeGenerationDuration { .. }) => {
-                let existing = catalog
-                    .get_generation_duration(2)
-                    .expect("catalog should contain existing gen2 duration");
-                warn!(
-                    existing_secs = existing.as_secs(),
-                    provided_secs = duration.as_secs(),
-                    "cannot change the existing gen2 duration after it has been set"
-                );
-                generation_durations.insert(2, existing);
-            }
-            Err(e) => return Err(e.into()),
-        }
+        set_generation_duration_with_error_handling(
+            &catalog,
+            &mut generation_durations,
+            2,
+            gen2_duration.as_duration(),
+        ).await?;
     }
     if let Some(gen3_duration) = config.gen3_duration {
-        let duration = gen3_duration.as_duration();
-        match catalog.set_generation_duration(3, duration).await {
-            Ok(_) | Err(CatalogError::AlreadyExists) => {
-                generation_durations.insert(3, duration);
-            }
-            Err(CatalogError::CannotChangeGenerationDuration { .. }) => {
-                let existing = catalog
-                    .get_generation_duration(3)
-                    .expect("catalog should contain existing gen3 duration");
-                warn!(
-                    existing_secs = existing.as_secs(),
-                    provided_secs = duration.as_secs(),
-                    "cannot change the existing gen3 duration after it has been set"
-                );
-                generation_durations.insert(3, existing);
-            }
-            Err(e) => return Err(e.into()),
-        }
+        set_generation_duration_with_error_handling(
+            &catalog,
+            &mut generation_durations,
+            3,
+            gen3_duration.as_duration(),
+        ).await?;
     }
     if let Some(gen4_duration) = config.gen4_duration {
-        let duration = gen4_duration.as_duration();
-        match catalog.set_generation_duration(4, duration).await {
-            Ok(_) | Err(CatalogError::AlreadyExists) => {
-                generation_durations.insert(4, duration);
-            }
-            Err(CatalogError::CannotChangeGenerationDuration { .. }) => {
-                let existing = catalog
-                    .get_generation_duration(4)
-                    .expect("catalog should contain existing gen4 duration");
-                warn!(
-                    existing_secs = existing.as_secs(),
-                    provided_secs = duration.as_secs(),
-                    "cannot change the existing gen4 duration after it has been set"
-                );
-                generation_durations.insert(4, existing);
-            }
-            Err(e) => return Err(e.into()),
-        }
+        set_generation_duration_with_error_handling(
+            &catalog,
+            &mut generation_durations,
+            4,
+            gen4_duration.as_duration(),
+        ).await?;
     }
     if let Some(gen5_duration) = config.gen5_duration {
-        let duration = gen5_duration.as_duration();
-        match catalog.set_generation_duration(5, duration).await {
-            Ok(_) | Err(CatalogError::AlreadyExists) => {
-                generation_durations.insert(5, duration);
-            }
-            Err(CatalogError::CannotChangeGenerationDuration { .. }) => {
-                let existing = catalog
-                    .get_generation_duration(5)
-                    .expect("catalog should contain existing gen5 duration");
-                warn!(
-                    existing_secs = existing.as_secs(),
-                    provided_secs = duration.as_secs(),
-                    "cannot change the existing gen5 duration after it has been set"
-                );
-                generation_durations.insert(5, existing);
-            }
-            Err(e) => return Err(e.into()),
-        }
+        set_generation_duration_with_error_handling(
+            &catalog,
+            &mut generation_durations,
+            5,
+            gen5_duration.as_duration(),
+        ).await?;
     }
 
     // Initialize and start compaction service
